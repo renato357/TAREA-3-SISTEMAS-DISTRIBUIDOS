@@ -8,12 +8,9 @@ El objetivo principal del proyecto es comparar las ventajas y desventajas de Apa
 
 ## Estructura del Repositorio
 
-- `datasets/`: Directorio que contiene los conjuntos de datos utilizados para las pruebas y análisis.
 - `report/`: Directorio que contiene el informe final del proyecto.
 - `scripts/`: Directorio que contiene los scripts utilizados para la ejecución de las pruebas en Hive y Pig.
-  - `hive_scripts/`: Código de los scripts utilizados en Apache Hive.
-  - `pig_scripts/`: Código de los scripts utilizados en Apache Pig.
-- `tests/`: Directorio que contiene los scripts de prueba y los conjuntos de datos utilizados para las pruebas.
+  - `data/`: Directorio que contiene el conjunto de datos utilizado para las pruebas y análisis.
 
 ## Video
 
