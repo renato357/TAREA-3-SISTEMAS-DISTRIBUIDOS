@@ -1,0 +1,153 @@
+hive
+-- Obtener estadísticas básicas
+-- Hive
+-- Crear la tabla en Hive
+CREATE TABLE myloaddata(
+    branch_addr STRING,
+    branch_type STRING,
+    taken INT,
+    target STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+-- Cargar los datos en la tabla
+LOAD DATA INPATH '/user/jb/charlie_trace/charlie_trace-1_17571657100049929577.branch_trace.1006511.csv' 
+INTO TABLE myloaddata;
+
+
+CREATE TABLE branches AS
+SELECT * FROM myloaddata TABLESAMPLE (10 PERCENT);
+
+
+
+
+--2. Obtener estadísticas básicas
+--Hive
+-- Contar el número total de registros
+SELECT COUNT(*) AS total_records FROM branches;
+
+
+
+--3. Contar la frecuencia de cada tipo de branch
+--Hive
+-- Contar la frecuencia de cada tipo de branch
+SELECT branch_type, COUNT(*) AS count 
+FROM branches 
+GROUP BY branch_type;
+
+
+
+
+
+
+
+-- 4. Analizar la relación entre los tipos de branch y el valor de "taken"
+--Hive
+-- Analizar la relación entre branch_type y taken
+SELECT branch_type, taken, COUNT(*) AS count 
+FROM branches 
+GROUP BY branch_type, taken;
+
+
+
+
+
+
+
+--5. Calcular la proporción de registros con "taken" igual a 1 para cada tipo de branch
+--Hive
+-- Calcular la proporción de taken = 1 por branch_type
+WITH total_counts AS (
+    SELECT branch_type, COUNT(*) AS total_count 
+    FROM branches 
+    GROUP BY branch_type
+),
+taken_1_counts AS (
+    SELECT branch_type, COUNT(*) AS taken_1_count 
+    FROM branches 
+    WHERE taken = 1 
+    GROUP BY branch_type
+)
+SELECT 
+    t.branch_type,
+    (t1.taken_1_count / t.total_count) AS proportion_taken_1
+FROM 
+    total_counts t
+JOIN 
+    taken_1_counts t1 
+ON 
+    t.branch_type = t1.branch_type;
+
+
+
+
+
+
+
+
+
+--6. Crear tablas en Hive para almacenar los resultados
+--Hive
+-- Crear tabla para almacenar los conteos de frecuencia
+--6_1
+CREATE TABLE branch_counts (
+    branch_type STRING,
+    count INT
+);
+
+-- Insertar los resultados en la tabla
+INSERT INTO branch_counts 
+SELECT branch_type, COUNT(*) 
+FROM branches 
+GROUP BY branch_type;
+
+
+-- 6_2
+-- Crear tabla para almacenar la relación entre branch_type y taken
+CREATE TABLE branch_taken_relation (
+    branch_type STRING,
+    taken INT,
+    count INT
+);
+
+-- Insertar los resultados en la tabla
+INSERT INTO branch_taken_relation 
+SELECT branch_type, taken, COUNT(*) 
+FROM branches 
+GROUP BY branch_type, taken;
+
+    
+-- 6_3
+-- Crear tabla para almacenar la proporción de taken = 1 por branch_type
+CREATE TABLE proportion_taken_1 (
+    branch_type STRING,
+    proportion_taken_1 DOUBLE
+);
+
+-- Insertar los resultados en la tabla
+WITH total_counts AS (
+    SELECT branch_type, COUNT(*) AS total_count 
+    FROM branches 
+    GROUP BY branch_type
+),
+taken_1_counts AS (
+    SELECT branch_type, COUNT(*) AS taken_1_count 
+    FROM branches 
+    WHERE taken = 1 
+    GROUP BY branch_type
+)
+INSERT INTO proportion_taken_1 
+SELECT 
+    t.branch_type,
+    (t1.taken_1_count / t.total_count) AS proportion_taken_1
+FROM 
+    total_counts t
+JOIN 
+    taken_1_counts t1 
+ON 
+    t.branch_type = t1.branch_type;
+
+
+

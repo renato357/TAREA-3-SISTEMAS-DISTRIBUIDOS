@@ -1,0 +1,55 @@
+# Parar servicios Hadoop
+stop-dfs.sh
+stop-yarn.sh
+
+
+
+
+#Verificar servidor, si no partir
+hive --service metastore &
+
+
+# Iniciar servicios Hadoop
+start-dfs.sh
+start-yarn.sh
+
+
+#Cambiamos el estado de HDFS para permitir escritura
+hdfs dfsadmin -safemode leave
+
+
+# Crear el directorio en HDFS
+hadoop fs -mkdir -p /user/jb/charlie_trace
+#Remover el archivo existente
+hadoop fs -rm /user/jb/charlie_trace/charlie_trace-1_17571657100049929577.branch_trace.1006511.csv
+# Subir el archivo a HDFS
+hadoop fs -put /home/jb/Desktop/T3_SD/data/charlie_trace-1_17571657100049929577.branch_trace.1006511.csv /user/jb/charlie_trace/
+# Verificar el contenido del archivo subido
+hadoop fs -cat /user/jb/charlie_trace/charlie_trace-1_17571657100049929577.branch_trace.1006511.csv | head -10
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

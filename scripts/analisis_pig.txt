@@ -1,0 +1,138 @@
+pig
+-- Cargar el archivo CSV original
+branches = LOAD '/user/jb/charlie_trace/charlie_trace-1_17571657100049929577.branch_trace.1006511.csv' USING PigStorage(',')
+           AS (branch_addr:chararray, branch_type:chararray, taken:int, target:chararray);
+
+
+
+
+
+-- Cargar el archivo CSV original
+full_data = LOAD '/user/jb/charlie_trace/charlie_trace-1_17571657100049929577.branch_trace.1006511.csv' USING PigStorage(',')
+           AS (branch_addr:chararray, branch_type:chararray, taken:int, target:chararray);
+
+-- Crear una muestra del 1% usando la función SAMPLE
+sampled_data = SAMPLE full_data 0.01;
+
+-- Almacenar la muestra en un archivo
+STORE sampled_data INTO '/user/jb/charlie_trace/sample_1_percent.csv' USING PigStorage(',');
+
+-- Cargar la muestra
+branches = LOAD '/user/jb/charlie_trace/sample_1_percent.csv' USING PigStorage(',')
+           AS (branch_addr:chararray, branch_type:chararray, taken:int, target:chararray);
+
+
+
+
+
+
+-- Cargar el archivo CSV original
+full_data = LOAD '/user/jb/charlie_trace/charlie_trace-1_17571657100049929577.branch_trace.1006511.csv' USING PigStorage(',')
+           AS (branch_addr:chararray, branch_type:chararray, taken:int, target:chararray);
+
+-- Crear una muestra del 10% usando la función SAMPLE
+sampled_data = SAMPLE full_data 0.1;
+
+-- Almacenar la muestra en un archivo
+STORE sampled_data INTO '/user/jb/charlie_trace/sample_10_percent.csv' USING PigStorage(',');
+
+-- Cargar la muestra
+branches = LOAD '/user/jb/charlie_trace/sample_10_percent.csv' USING PigStorage(',')
+           AS (branch_addr:chararray, branch_type:chararray, taken:int, target:chararray);
+
+
+
+--2. Obtener estadísticas básicas
+-- Pig
+-- Contar el número total de registros
+total_records = FOREACH (GROUP branches ALL) GENERATE COUNT_STAR(branches) AS total;
+-- Almacenar el resultado en HDFS
+STORE total_records INTO '/user/jb/total_records_output' USING PigStorage(',');
+DUMP total_records;
+
+
+
+--3. Contar la frecuencia de cada tipo de branch
+--Pig
+-- Agrupar por el campo branch_type
+grouped_branches = GROUP branches BY branch_type;
+-- Contar el número de ocurrencias de cada tipo de branch
+branch_counts = FOREACH grouped_branches GENERATE group AS branch_type, COUNT(branches) AS count;
+-- Almacenar el resultado en un archivo
+STORE branch_counts INTO '/user/jb/charlie_trace/branch_counts' USING PigStorage(',');
+-- Mostrar el resultado en la consola (opcional)
+DUMP branch_counts;
+
+
+
+
+
+4. Analizar la relación entre los tipos de branch y el valor de "taken"
+--Pig
+-- Reemplazar valores nulos o vacíos en branch_type y taken
+branches_with_default = FOREACH branches GENERATE 
+                         branch_addr, 
+                         (branch_type IS NULL OR branch_type == '' ? 'NULL' : branch_type) AS branch_type, 
+                         (taken IS NULL OR taken == '' OR (int) taken IS NULL ? -1 : (int) taken) AS taken, 
+                         target;
+
+-- Agrupar por branch_type y taken
+grouped_branches = GROUP branches_with_default BY (branch_type, taken);
+
+-- Contar el número de ocurrencias de cada combinación de branch_type y taken
+branch_counts = FOREACH grouped_branches GENERATE 
+                 FLATTEN(group) AS (branch_type, taken), 
+                 COUNT(branches_with_default) AS count;
+
+-- Ordenar los resultados para facilitar la lectura (opcional)
+sorted_branch_counts = ORDER branch_counts BY branch_type, taken;
+-- Almacenar el resultado en un archivo
+STORE sorted_branch_counts INTO '/user/jb/charlie_trace/branch_taken_counts' USING PigStorage(',');
+-- Mostrar el resultado en la consola (opcional)
+DUMP sorted_branch_counts;
+
+
+
+
+
+
+--5. Calcular la proporción de registros con "taken" igual a 1 para cada tipo de branch
+--Pig
+-- Reemplazar valores nulos o vacíos en branch_type
+branches_with_default = FOREACH branches GENERATE 
+                         branch_addr, 
+                         (branch_type IS NULL OR branch_type == '' ? 'NULL' : branch_type) AS branch_type, 
+                         taken, 
+                         target;
+
+-- Calcular el total de registros por branch_type
+total_counts = FOREACH (GROUP branches_with_default BY branch_type) GENERATE 
+                group AS branch_type, 
+                COUNT(branches_with_default) AS total_count;
+
+-- Filtrar registros donde taken = 1
+taken_1_branches = FILTER branches_with_default BY taken == 1;
+
+-- Calcular el total de registros con taken = 1 por branch_type
+taken_1_counts = FOREACH (GROUP taken_1_branches BY branch_type) GENERATE 
+                  group AS branch_type, 
+                  COUNT(taken_1_branches) AS taken_1_count;
+
+-- Unir ambos resultados
+joined_counts = JOIN total_counts BY branch_type LEFT OUTER, taken_1_counts BY branch_type;
+
+-- Calcular la proporción de taken = 1
+proportion_taken_1 = FOREACH joined_counts GENERATE 
+                      total_counts::branch_type AS branch_type, 
+                      (double)(taken_1_counts::taken_1_count IS NULL ? 0 : taken_1_counts::taken_1_count) / total_counts::total_count AS proportion_taken_1;
+
+-- Almacenar el resultado en un archivo
+STORE proportion_taken_1 INTO '/user/jb/charlie_trace/proportion_taken_1' USING PigStorage(',');
+
+-- Mostrar el resultado en la consola (opcional)
+DUMP proportion_taken_1;
+
+
+
+
+

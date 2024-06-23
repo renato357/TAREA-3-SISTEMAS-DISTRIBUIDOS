@@ -1,0 +1,360 @@
+# Eliminar Java
+sudo apt-get remove --purge openjdk-*
+
+# Limpiar paquetes residuales y archivos de la remoción
+sudo apt-get autoremove
+sudo apt-get autoclean
+
+# Eliminar Hadoop
+sudo rm -rf /usr/local/hadoop
+rm -rf ~/hadoop
+
+# Eliminar Hive
+sudo rm -rf /usr/local/hive
+
+# Eliminar configuraciones en .bashrc
+nano ~/.bashrc
+# Remueve cualquier línea relacionada con Java, Hadoop y Hive
+source ~/.bashrc
+
+
+
+
+sudo apt-get update
+sudo apt-get install openjdk-8-jdk
+
+# Configurar JAVA_HOME
+echo 'export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64' >> ~/.bashrc
+echo 'export PATH=$PATH:$JAVA_HOME/bin' >> ~/.bashrc
+source ~/.bashrc
+
+# Verificar instalación
+java -version
+
+
+
+
+
+
+
+
+wget https://downloads.apache.org/hadoop/common/hadoop-3.3.5/hadoop-3.3.5.tar.gz
+tar -xzvf hadoop-3.3.5.tar.gz
+sudo mv hadoop-3.3.5 /usr/local/hadoop
+
+
+
+sudo nano /usr/local/hadoop/etc/hadoop/hadoop-env.sh
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+
+
+
+# Configurar variables de entorno para Hadoop
+echo 'export HADOOP_HOME=/usr/local/hadoop' >> ~/.bashrc
+echo 'export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop' >> ~/.bashrc
+echo 'export HADOOP_INSTALL=$HADOOP_HOME' >> ~/.bashrc
+echo 'export HADOOP_MAPRED_HOME=$HADOOP_HOME' >> ~/.bashrc
+echo 'export HADOOP_COMMON_HOME=$HADOOP_HOME' >> ~/.bashrc
+echo 'export HADOOP_HDFS_HOME=$HADOOP_HOME' >> ~/.bashrc
+echo 'export YARN_HOME=$HADOOP_HOME' >> ~/.bashrc
+echo 'export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native' >> ~/.bashrc
+echo 'export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin' >> ~/.bashrc
+echo 'export HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/native"' >> ~/.bashrc
+source ~/.bashrc
+
+#Verificamos que este todo agregado
+#nano ~/.bashrc
+
+# Verificar instalación
+hadoop version
+
+
+nano /usr/local/hadoop/etc/hadoop/core-site.xml
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://localhost:9000</value>
+    </property>
+</configuration>
+
+
+
+nano /usr/local/hadoop/etc/hadoop/hdfs-site.xml
+<configuration>
+    <property>
+        <name>dfs.replication</name>
+        <value>1</value>
+    </property>
+    <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>file:///usr/local/hadoop/hdfs/namenode</value>
+    </property>
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>file:///usr/local/hadoop/hdfs/datanode</value>
+    </property>
+</configuration>
+
+
+
+nano /usr/local/hadoop/etc/hadoop/mapred-site.xml
+<configuration>
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+</configuration>
+
+
+
+
+nano /usr/local/hadoop/etc/hadoop/yarn-site.xml
+<configuration>
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+</configuration>
+
+
+
+# Parar servicios Hadoop
+stop-dfs.sh
+stop-yarn.sh
+# Iniciar servicios Hadoop
+start-dfs.sh
+start-yarn.sh
+
+
+hdfs namenode -format
+
+
+# Verificar servicios
+jps
+
+
+
+
+wget https://downloads.apache.org/hive/hive-3.1.3/apache-hive-3.1.3-bin.tar.gz
+tar -xzvf apache-hive-3.1.3-bin.tar.gz
+sudo mv apache-hive-3.1.3-bin /usr/local/hive
+
+# Configurar variables de entorno para Hive
+echo 'export HIVE_HOME=/usr/local/hive' >> ~/.bashrc
+echo 'export PATH=$PATH:$HIVE_HOME/bin' >> ~/.bashrc
+source ~/.bashrc
+
+
+
+sudo apt-get update
+sudo apt-get install mysql-server
+sudo service mysql start
+
+
+cd $HIVE_HOME/conf
+cp hive-default.xml.template hive-site.xml
+nano $HIVE_HOME/conf/hive-site.xml
+
+
+
+<property>
+    <name>hive.metastore.uris</name>
+    <value>thrift://localhost:9083</value>
+</property>
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:mysql://localhost/metastore?createDatabaseIfNotExist=true</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>com.mysql.cj.jdbc.Driver</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>hiveuser</value>
+    </property>
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name>
+        <value>hivepassword</value>
+    </property>
+    <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>/user/hive/warehouse</value>
+    </property>
+ <property>
+    <name>hive.exec.scratchdir</name>
+    <value>/tmp/hive/${user.name}</value>
+  </property>
+  <property>
+    <name>hive.downloaded.resources.dir</name>
+    <value>/tmp/${user.name}/hive_resources</value>
+  </property>
+  <property>
+    <name>hive.querylog.location</name>
+    <value>/tmp/hive/${user.name}</value>
+  </property>
+  <property>
+    <name>hive.server2.logging.operation.log.location</name>
+    <value>/tmp/hive/${user.name}/operation_logs</value>
+  </property>
+  <property>
+    <name>system:java.io.tmpdir</name>
+    <value>/tmp</value>
+  </property>
+  <property>
+    <name>system:user.name</name>
+    <value>${user.name}</value>
+  </property>
+    <property>
+        <name>datanucleus.autoCreateSchema</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>datanucleus.fixedDatastore</name>
+        <value>false</value>
+    </property>
+
+
+#ADEMAS VER EL CARACTER DE LA LINEA 3216 APROX
+#ADEMAS VER EL CARACTER DE LA LINEA 3216 APROX
+#ADEMAS VER EL CARACTER DE LA LINEA 3216 APROX
+#Exclusive locks for transactional tables.  This ensures that inserts
+#ADEMAS VER EL CARACTER DE LA LINEA 3216 APROX
+
+
+
+
+
+
+
+
+
+wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.29.tar.gz
+tar -xzvf mysql-connector-java-8.0.29.tar.gz
+sudo mv mysql-connector-java-8.0.29/mysql-connector-java-8.0.29.jar $HIVE_HOME/lib/
+
+
+sudo mysql -u root
+
+
+
+# Configurar usuario y base de datos para Hive
+sudo mysql -u root -p
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'geforcemsi';
+FLUSH PRIVILEGES;
+EXIT;
+
+# Crear base de datos y usuario para Hive
+sudo mysql -u root -p
+DROP DATABASE IF EXISTS metastore;
+SHOW DATABASES;
+
+CREATE DATABASE metastore;
+CREATE USER 'hiveuser'@'localhost' IDENTIFIED BY 'hivepassword';
+GRANT ALL PRIVILEGES ON metastore.* TO 'hiveuser'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+
+schematool -initSchema -dbType mysql
+
+
+
+# Parar servicios Hadoop
+stop-dfs.sh
+stop-yarn.sh
+# Iniciar servicios Hadoop
+start-dfs.sh
+start-yarn.sh
+
+hdfs namenode -format
+
+# Verificar servicios
+jps
+
+
+nano ~/.bashrc
+source ~/.bashrc
+
+ls /usr/local/hadoop/share/hadoop/common/lib/slf4j-*.jar
+ls /usr/local/tez/lib/slf4j-*.jar
+
+
+# Verificar y eliminar JAR conflictivos en Hadoop
+ls /usr/local/hadoop/share/hadoop/common/lib | grep slf4j
+sudo rm /usr/local/hadoop/share/hadoop/common/lib/slf4j-reload4j-1.7.36.jar
+sudo rm /usr/local/hadoop/share/hadoop/common/lib/slf4j-api-1.7.36.jar 
+
+
+# Verificar y eliminar JAR conflictivos en Hive
+ls /usr/local/hive/lib | grep slf4j
+sudo rm /usr/local/hive/lib/slf4j-log4j12-1.7.32.jar
+
+
+
+
+#Nuevo intento
+sudo rm /usr/local/hadoop/share/hadoop/common/lib/slf4j-reload4j-1.7.36.jar
+
+wget https://repo1.maven.org/maven2/org/slf4j/slf4j-reload4j/1.7.36/slf4j-reload4j-1.7.36.jar
+sudo mv slf4j-reload4j-1.7.36.jar /usr/local/hadoop/share/hadoop/common/lib/
+
+
+
+
+wget https://repo1.maven.org/maven2/org/slf4j/slf4j-log4j12/1.7.32/slf4j-log4j12-1.7.32.jar
+
+sudo cp slf4j-log4j12-1.7.32.jar /usr/local/hadoop/share/hadoop/common/lib/
+sudo cp slf4j-log4j12-1.7.32.jar /usr/local/hive/lib/
+
+
+
+hdfs namenode -format
+
+hadoop fs -chmod -R 777 /tmp/hive
+
+
+# Parar servicios Hadoop
+stop-dfs.sh
+stop-yarn.sh
+# Iniciar servicios Hadoop
+start-dfs.sh
+start-yarn.sh
+
+# Verificar servicios
+jps
+
+
+
+
+#Removemos pig
+sudo rm -rf /usr/local/pig
+
+#Descargamos apache pig
+wget https://downloads.apache.org/pig/pig-0.17.0/pig-0.17.0.tar.gz
+tar -xzvf pig-0.17.0.tar.gz
+sudo mv pig-0.17.0 /usr/local/pig
+
+
+echo 'export PIG_HOME=/usr/local/pig' >> ~/.bashrc
+echo 'PATH=$PIG_HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+
+
+#Abrimos en el navegador para ver que el NameNode y los DataNodes estén en funcionamiento
+http://localhost:9870
+
+#Interfaz web de YARN para verificar que los servicios de ResourceManager y NodeManager estén en funcionamiento
+http://localhost:8088
+
+
+
+
+
+wget https://downloads.apache.org/tez/0.10.1/apache-tez-0.10.1-bin.tar.gz
+
+
+tar -xvzf apache-tez-0.10.1-bin.tar.gz
+sudo mv apache-tez-0.10.1-bin /usr/local/tez
+
+
