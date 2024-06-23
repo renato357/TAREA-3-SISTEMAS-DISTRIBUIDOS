@@ -10,7 +10,12 @@ El objetivo principal del proyecto es comparar las ventajas y desventajas de Apa
 
 - `report/`: Directorio que contiene el informe final del proyecto.
 - `scripts/`: Directorio que contiene los scripts utilizados para la ejecución de las pruebas en Hive y Pig.
-  - `data/`: Directorio que contiene el conjunto de datos utilizado para las pruebas y análisis.
+
+## Conjunto de Datos Utilizado
+
+Para las pruebas, se utilizará el archivo `branch_trace.csv`. Este archivo tiene un tamaño de 1.6 GB y, una vez descomprimido, ocupa un total de 6.2 GB. Para más detalles, se puede consultar la siguiente URL:
+[branch_trace.csv](https://console.cloud.google.com/storage/browser/_details/external-traces/charlie/trace-1/17571657100049929577.1006511.memtrace.gz;tab=live_object?authuser=2)
+
 
 ## Video
 
